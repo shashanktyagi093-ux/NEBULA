@@ -3262,11 +3262,151 @@
     });
   }
 
+
+  function setupAutoVideoRecorder() {
+    const btnRec = document.getElementById("btn-record-demo");
+    if (!btnRec) return;
+
+    let activeRecorder = null;
+    let activeStream = null;
+
+    btnRec.addEventListener("click", async () => {
+      if (activeRecorder && activeRecorder.state !== "inactive") {
+        activeRecorder.stop();
+        return;
+      }
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+        alert("Screen recording is supported in Chrome, Edge, and other modern browsers.");
+        return;
+      }
+
+      const proceed = confirm(
+        "🎬 NEBULA Automated Demo Video Generator\n\n" +
+        "1. Click OK and select 'This Tab' or 'Entire Screen' (check 'Also share tab audio').\n" +
+        "2. NEBULA will auto-narrate and demonstrate all 5 steps with live voiceover and Nemotron AI.\n" +
+        "3. When finished, your recording will automatically download to your Downloads folder!\n\n" +
+        "Start recording now?"
+      );
+      if (!proceed) return;
+
+      try {
+        activeStream = await navigator.mediaDevices.getDisplayMedia({
+          video: { frameRate: 60 },
+          audio: true,
+        });
+      } catch (err) {
+        toast("Screen recording cancelled.");
+        return;
+      }
+
+      btnRec.classList.add("recording");
+      btnRec.textContent = "⏹ Stop Recording";
+
+      let mimeType = "video/webm;codecs=vp9,opus";
+      if (typeof MediaRecorder.isTypeSupported === "function" && !MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = "video/webm";
+      }
+
+      const chunks = [];
+      const recorder = new MediaRecorder(activeStream, { mimeType });
+      activeRecorder = recorder;
+
+      recorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) chunks.push(e.data);
+      };
+
+      const cleanup = () => {
+        if (activeStream) {
+          activeStream.getTracks().forEach((t) => t.stop());
+          activeStream = null;
+        }
+        btnRec.classList.remove("recording");
+        btnRec.textContent = "🎥 Auto-Record Video";
+      };
+
+      activeStream.getVideoTracks()[0].onended = () => {
+        if (recorder.state !== "inactive") recorder.stop();
+      };
+
+      recorder.onstop = () => {
+        cleanup();
+        const blob = new Blob(chunks, { type: mimeType });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "nebula-hackathon-demo.webm";
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url), 4000);
+        toast("🎉 Video recorded and downloaded! Ready for submission.");
+      };
+
+      recorder.start(500);
+
+      const scriptSteps = [
+        {
+          step: 0,
+          speech: "Welcome to NEBULA: an autonomous mathematical intelligence and interactive graphing engine powered by NVIDIA Nemotron on Nebius Token Factory. It translates physical intuition into mathematical curves rendered at a fluid 60 frames per second.",
+          delay: 11000,
+        },
+        {
+          step: 1,
+          speech: "Step 2: Quantum wavepacket. NEBULA models Gaussian modulated carrier waves with automatic real-time detection of roots, extrema, and intercepts.",
+          delay: 10000,
+        },
+        {
+          step: 2,
+          speech: "Step 3: Polar coordinates. NEBULA supports concentric radial grids with both degree and radian modes, plotting polar roses with sub-millisecond local execution.",
+          delay: 10000,
+        },
+        {
+          step: 3,
+          speech: "Step 4: Calculus. Real-time tangent line derivatives at any point, with adaptive numerical quadrature area shading for definite integrals.",
+          delay: 10000,
+        },
+        {
+          step: 4,
+          speech: "Step 5: Frontier AI. Using NVIDIA Nemotron 3 Ultra on Nebius Token Factory, users can describe physical concepts in natural language to synthesize validated non-linear soliton curves. Let's see the physical derivation.",
+          delay: 12000,
+          action: () => {
+            setTimeout(() => {
+              const btnExp = document.getElementById("btn-explain-nemotron");
+              if (btnExp) btnExp.click();
+            }, 1800);
+          },
+        },
+      ];
+
+      let stepIndex = 0;
+      function nextStep() {
+        if (recorder.state === "inactive") return;
+        if (stepIndex >= scriptSteps.length) {
+          speakText("Thank you for watching NEBULA: bridging human physical intuition and mathematical rigor with NVIDIA and Nebius.");
+          setTimeout(() => {
+            if (recorder.state !== "inactive") recorder.stop();
+          }, 6000);
+          return;
+        }
+
+        const curr = scriptSteps[stepIndex];
+        showTourStep(curr.step);
+        speakText(curr.speech);
+        if (curr.action) curr.action();
+
+        stepIndex++;
+        setTimeout(nextStep, curr.delay);
+      }
+
+      nextStep();
+    });
+  }
+
   function boot() {
     resize();
     renderKeypad();
     setupSettings();
     setupTour();
+    setupAutoVideoRecorder();
     addLine("a = 2.5", "math", false);
     addLine("y = a * sin(x)", "math", false);
     addLine("y <= cos(x) + 1", "math", false);
