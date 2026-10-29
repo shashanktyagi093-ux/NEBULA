@@ -123,6 +123,23 @@
     { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
   ));
 
+  function formatMarkdown(text) {
+    if (!text) return "";
+    let html = escapeHtml(text);
+    html = html.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+    html = html.replace(/\*(.*?)\*/g, "<em>$1</em>");
+    html = html.replace(/^### (.*$)/gim, '<h4 class="nemotron-h4">$1</h4>');
+    html = html.replace(/^## (.*$)/gim, '<h3 class="nemotron-h3">$1</h3>');
+    html = html.replace(/^# (.*$)/gim, '<h2 class="nemotron-h2">$1</h2>');
+    html = html.replace(/\$([^\$]+)\$/g, '<code class="nemotron-math">$1</code>');
+    html = html.replace(/^\s*[-*]\s+(.*$)/gim, "<li>$1</li>");
+    html = html.replace(/(<li>.*<\/li>)/gim, '<ul class="nemotron-list">$1</ul>');
+    html = html.replace(/<\/ul>\s*<ul class="nemotron-list">/g, "");
+    html = html.replace(/\n\n+/g, "<p></p>");
+    html = html.replace(/\n/g, "<br>");
+    return html;
+  }
+
   /* ---------------------------------------------------------------- view */
 
   const sx = (x) => state.size.w / 2 + (x - state.view.cx) * state.view.scale;
@@ -2940,26 +2957,62 @@
 
   let currentTourStep = 0;
 
+  function clearAllLines() {
+    state.animations.forEach((anim) => {
+      if (anim && anim.frame) cancelAnimationFrame(anim.frame);
+    });
+    state.animations.clear();
+
+    state.rows.forEach((row) => {
+      if (row && row.el) row.el.remove();
+    });
+    state.rows.clear();
+
+    state.lines = [];
+    state.results.clear();
+    state.variables = {};
+    state.sliders.clear();
+    state.selected = null;
+    state.pois = [];
+    state.pinnedPOIs.clear();
+
+    updateCount();
+    updateLegend();
+    paintSelection();
+    renderInspector();
+  }
+
   const TOUR_STEPS = [
     {
       step: 1,
       badge: "Step 1 of 5",
       title: "60 FPS Dynamic Sliders & Animation",
-      desc: "Continuous parameter variable animation with automatic ping-pong bounds.",
+      desc: "Interactive parameter variation with continuous real-time 60 FPS animation.",
       run: () => {
-        state.lines = [];
-        state.view = { xmin: -10, xmax: 10, ymin: -5, ymax: 5 };
+        clearAllLines();
+        state.view.cx = 0;
+        state.view.cy = 0;
+        state.view.scale = 46;
         state.gridType = "cartesian";
-        addLine("a = 2.5", "math", true);
-        addLine("y = a * sin(x)", "math", true);
-        state.selected = state.lines[0].id;
+        state.angleMode = "rad";
+        els.setGridCartesian?.classList.add("active");
+        els.setGridPolar?.classList.remove("active");
+        els.setAngleRad?.classList.add("active");
+        els.setAngleDeg?.classList.remove("active");
+
+        const lineA = addLine("a = 2.5", "math", false);
+        const lineY = addLine("y = a * sin(x)", "math", false);
+        state.selected = lineY.id;
+        paintSelection();
+        renderInspector();
+        compute();
+
         setTimeout(() => {
-          const row = state.lines[0]?.rowEl;
-          const playBtn = row?.querySelector(".slider-play");
-          if (playBtn && !playBtn.classList.contains("playing")) playBtn.click();
-        }, 300);
-        scheduleCompute(30);
-        requestDraw();
+          const rowA = state.rows.get(lineA.id);
+          if (rowA && rowA.sliderPlayBtn && !rowA.sliderPlayBtn.classList.contains("playing")) {
+            rowA.sliderPlayBtn.click();
+          }
+        }, 350);
       }
     },
     {
@@ -2968,14 +3021,24 @@
       title: "Quantum Wavepacket & Real-Time POIs",
       desc: "Gaussian modulated carrier wave with automatic roots, extrema, and intercept pins.",
       run: () => {
-        state.lines = [];
-        state.view = { xmin: -5, xmax: 5, ymin: -2, ymax: 2 };
+        clearAllLines();
+        state.view.cx = 0;
+        state.view.cy = 0;
+        state.view.scale = 55;
+        state.gridType = "cartesian";
+        state.angleMode = "rad";
         state.showPOI = true;
         if (els.setPoi) els.setPoi.checked = true;
-        addLine("y = exp(-x^2) * cos(5*x)", "math", true);
-        state.selected = state.lines[0].id;
-        scheduleCompute(30);
-        requestDraw();
+        els.setGridCartesian?.classList.add("active");
+        els.setGridPolar?.classList.remove("active");
+        els.setAngleRad?.classList.add("active");
+        els.setAngleDeg?.classList.remove("active");
+
+        const line = addLine("y = exp(-x^2) * cos(5*x)", "math", false);
+        state.selected = line.id;
+        paintSelection();
+        renderInspector();
+        compute();
       }
     },
     {
@@ -2984,18 +3047,22 @@
       title: "Polar Coordinate Mode in Degrees",
       desc: "Concentric circle radial grid in Degrees (0° to 360°) with 8-petal Polar Rose.",
       run: () => {
-        state.lines = [];
-        state.view = { xmin: -5, xmax: 5, ymin: -5, ymax: 5 };
+        clearAllLines();
+        state.view.cx = 0;
+        state.view.cy = 0;
+        state.view.scale = 42;
         state.gridType = "polar";
         state.angleMode = "deg";
         els.setGridPolar?.classList.add("active");
         els.setGridCartesian?.classList.remove("active");
         els.setAngleDeg?.classList.add("active");
         els.setAngleRad?.classList.remove("active");
-        addLine("r = 3 * cos(4 * theta)", "math", true);
-        state.selected = state.lines[0].id;
-        scheduleCompute(30);
-        requestDraw();
+
+        const line = addLine("r = 3 * cos(4 * theta)", "math", false);
+        state.selected = line.id;
+        paintSelection();
+        renderInspector();
+        compute();
       }
     },
     {
@@ -3004,32 +3071,49 @@
       title: "Calculus: Tangent Line & Definite Integral",
       desc: "Real-time derivative tangent line and adaptive Riemann quadrature area shading.",
       run: () => {
-        state.lines = [];
-        state.view = { xmin: -5, xmax: 5, ymin: -6, ymax: 6 };
+        clearAllLines();
+        state.view.cx = 0;
+        state.view.cy = 0;
+        state.view.scale = 38;
         state.gridType = "cartesian";
+        state.angleMode = "rad";
         els.setGridCartesian?.classList.add("active");
         els.setGridPolar?.classList.remove("active");
-        addLine("y = x^2 - 4", "math", true);
-        addLine("y = 4 * x - 8", "math", true);
-        addLine("integral(x^2 - 4, -2, 2)", "math", true);
-        state.selected = state.lines[0].id;
-        scheduleCompute(30);
-        requestDraw();
+        els.setAngleRad?.classList.add("active");
+        els.setAngleDeg?.classList.remove("active");
+
+        addLine("y = x^2 - 4", "math", false);
+        addLine("y = 4 * x - 8", "math", false);
+        const intLine = addLine("integral(x^2 - 4, -2, 2)", "math", false);
+        state.selected = intLine.id;
+        paintSelection();
+        renderInspector();
+        compute();
       }
     },
     {
       step: 5,
       badge: "Step 5 of 5",
       title: "NVIDIA Nemotron AI Synthesis via Nebius",
-      desc: "Deep mathematical reasoning powered by Nebius Token Factory: Soliton Wave.",
+      desc: "Deep mathematical reasoning powered by Nebius Token Factory: Non-Linear Soliton.",
       run: () => {
-        state.lines = [];
-        state.view = { xmin: -6, xmax: 6, ymin: -1, ymax: 4 };
-        addLine("y = 3 * sech(x)^2", "math", true);
-        state.selected = state.lines[0].id;
-        scheduleCompute(30);
-        requestDraw();
-        toast("⚡ Non-Linear Soliton synthesized with NVIDIA Nemotron!");
+        clearAllLines();
+        state.view.cx = 0;
+        state.view.cy = 1;
+        state.view.scale = 48;
+        state.gridType = "cartesian";
+        state.angleMode = "rad";
+        els.setGridCartesian?.classList.add("active");
+        els.setGridPolar?.classList.remove("active");
+        els.setAngleRad?.classList.add("active");
+        els.setAngleDeg?.classList.remove("active");
+
+        const line = addLine("y = 3 * sech(x)^2", "math", false);
+        state.selected = line.id;
+        paintSelection();
+        renderInspector();
+        compute();
+        toast("✨ Soliton Wave synthesized via NVIDIA Nemotron!");
       }
     }
   ];
@@ -3044,11 +3128,15 @@
     const badge = document.getElementById("tour-step-badge");
     const title = document.getElementById("tour-title");
     const desc = document.getElementById("tour-desc");
+    const btnPrev = document.getElementById("tour-prev");
+    const btnNext = document.getElementById("tour-next");
 
     if (banner) banner.style.display = "flex";
     if (badge) badge.textContent = item.badge;
     if (title) title.textContent = item.title;
     if (desc) desc.textContent = item.desc;
+    if (btnPrev) btnPrev.style.display = idx === 0 ? "none" : "inline-block";
+    if (btnNext) btnNext.textContent = idx === TOUR_STEPS.length - 1 ? "Finish ✓" : "Next ▶";
 
     item.run();
   }
@@ -3072,7 +3160,7 @@
     btnNext?.addEventListener("click", () => {
       if (currentTourStep >= TOUR_STEPS.length - 1) {
         if (banner) banner.style.display = "none";
-        toast("✓ Hackathon Demo Tour complete!");
+        toast("🎉 Hackathon Demo Tour complete!");
       } else {
         showTourStep(currentTourStep + 1);
       }

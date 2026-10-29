@@ -1740,6 +1740,18 @@ input:checked + .slider.round:before {
 .nemotron-explanation-body p, .nemotron-explanation-body li {
   margin-bottom: 4px;
 }
+.nemotron-math {
+  background: #f1f5f9;
+  color: #0f172a;
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+}
+.nemotron-list {
+  padding-left: 18px;
+  margin: 4px 0;
+}
 
 /* ------------------------------------------------- Guided Hackathon Demo Tour */
 .tour-btn {
