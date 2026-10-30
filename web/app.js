@@ -3270,6 +3270,19 @@
     let activeRecorder = null;
     let activeStream = null;
 
+    function setSubtitles(text) {
+      const box = document.getElementById("video-subtitles");
+      const el = document.getElementById("sub-text");
+      if (box && el) {
+        if (text) {
+          box.style.display = "flex";
+          el.textContent = text;
+        } else {
+          box.style.display = "none";
+        }
+      }
+    }
+
     btnRec.addEventListener("click", async () => {
       if (activeRecorder && activeRecorder.state !== "inactive") {
         activeRecorder.stop();
@@ -3282,11 +3295,12 @@
       }
 
       const proceed = confirm(
-        "🎬 NEBULA Automated Demo Video Generator\n\n" +
-        "1. Click OK and select 'This Tab' or 'Entire Screen' (check 'Also share tab audio').\n" +
-        "2. NEBULA will auto-narrate and demonstrate all 5 steps with live voiceover and Nemotron AI.\n" +
-        "3. When finished, your recording will automatically download to your Downloads folder!\n\n" +
-        "Start recording now?"
+        "🎬 NEBULA: 3-Minute YouTube Demo Video Generator\n\n" +
+        "1. Click OK and select 'This Tab' or 'Entire Screen' (make sure 'Also share tab audio' is checked).\n" +
+        "2. NEBULA will record a comprehensive 3-minute video covering every feature with voiceover narration, 60 FPS graphics, and live NVIDIA Nemotron AI!\n" +
+        "3. Live on-screen captions will guide viewers through each concept.\n" +
+        "4. When finished, your completed video will automatically download to your Downloads folder!\n\n" +
+        "Ready to record the 3-minute video?"
       );
       if (!proceed) return;
 
@@ -3301,7 +3315,7 @@
       }
 
       btnRec.classList.add("recording");
-      btnRec.textContent = "⏹ Stop Recording";
+      btnRec.textContent = "⏹ Stop Recording (3m)";
 
       let mimeType = "video/webm;codecs=vp9,opus";
       if (typeof MediaRecorder.isTypeSupported === "function" && !MediaRecorder.isTypeSupported(mimeType)) {
@@ -3322,7 +3336,8 @@
           activeStream = null;
         }
         btnRec.classList.remove("recording");
-        btnRec.textContent = "🎥 Auto-Record Video";
+        btnRec.textContent = "🎥 Auto-Record Video (3 Min)";
+        setSubtitles("");
       };
 
       activeStream.getVideoTracks()[0].onended = () => {
@@ -3335,72 +3350,133 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
-        a.download = "nebula-hackathon-demo.webm";
+        a.download = "nebula-3min-demo-walkthrough.webm";
         a.click();
         setTimeout(() => URL.revokeObjectURL(url), 4000);
-        toast("🎉 Video recorded and downloaded! Ready for submission.");
+        toast("🎉 3-Minute YouTube Demo Video recorded and downloaded successfully!");
       };
 
       recorder.start(500);
 
-      const scriptSteps = [
+      // 8 Comprehensive Acts for a full 3-minute in-depth YouTube presentation
+      const scriptActs = [
         {
-          step: 0,
-          speech: "Welcome to NEBULA: an autonomous mathematical intelligence and interactive graphing engine powered by NVIDIA Nemotron on Nebius Token Factory. It translates physical intuition into mathematical curves rendered at a fluid 60 frames per second.",
-          delay: 11000,
-        },
-        {
-          step: 1,
-          speech: "Step 2: Quantum wavepacket. NEBULA models Gaussian modulated carrier waves with automatic real-time detection of roots, extrema, and intercepts.",
-          delay: 10000,
-        },
-        {
-          step: 2,
-          speech: "Step 3: Polar coordinates. NEBULA supports concentric radial grids with both degree and radian modes, plotting polar roses with sub-millisecond local execution.",
-          delay: 10000,
-        },
-        {
-          step: 3,
-          speech: "Step 4: Calculus. Real-time tangent line derivatives at any point, with adaptive numerical quadrature area shading for definite integrals.",
-          delay: 10000,
-        },
-        {
-          step: 4,
-          speech: "Step 5: Frontier AI. Using NVIDIA Nemotron 3 Ultra on Nebius Token Factory, users can describe physical concepts in natural language to synthesize validated non-linear soliton curves. Let's see the physical derivation.",
-          delay: 12000,
+          act: "intro",
+          speech: "Welcome to NEBULA: an autonomous mathematical intelligence and interactive graphing engine built for the Nebius AI and NVIDIA Hackathon 2026. Traditional graphing tools like Desmos require users to already know exact formulas. NEBULA reimagines this paradigm by integrating frontier AI directly into symbolic calculus and 60 FPS canvas rendering, allowing users to explore mathematics directly through physical intuition.",
+          delay: 24000,
           action: () => {
-            setTimeout(() => {
-              const btnExp = document.getElementById("btn-explain-nemotron");
-              if (btnExp) btnExp.click();
-            }, 1800);
-          },
+            clearAllLines();
+            state.view.cx = 0; state.view.cy = 0; state.view.scale = 46;
+            state.gridType = "cartesian";
+            state.angleMode = "rad";
+            els.setGridCartesian?.classList.add("active");
+            els.setGridPolar?.classList.remove("active");
+            addLine("y = sin(x)", "math", false);
+            addLine("y = x^2 - 4", "math", false);
+            compute();
+            const banner = document.getElementById("tour-banner");
+            if (banner) {
+              banner.style.display = "flex";
+              document.getElementById("tour-step-badge").textContent = "NEBULA Overview";
+              document.getElementById("tour-title").textContent = "Autonomous Mathematical Engine";
+              document.getElementById("tour-desc").textContent = "Powered by NVIDIA Nemotron on Nebius Token Factory";
+              document.getElementById("tour-prev").style.display = "none";
+              document.getElementById("tour-next").style.display = "none";
+            }
+          }
         },
+        {
+          act: "step1",
+          speech: "First, our 60 FPS continuous parameter engine. Using client-side hardware-accelerated transforms and local numerical sampling, parameters like variable 'a' sweep seamlessly across defined intervals. Sliders support real-time ping-pong animation loops, dynamic step sizing, and sub-millisecond redraws without latency or frame drops.",
+          delay: 25000,
+          action: () => {
+            showTourStep(0);
+          }
+        },
+        {
+          act: "step2",
+          speech: "Next, we model a quantum mechanical Gaussian wavepacket: the real component of a free localized particle. NEBULA's analytical engine instantly detects critical calculus landmarks: finding roots, local extrema, and curvature transition points in real time. Hovering reveals exact analytical coordinates with automated label placement.",
+          delay: 25000,
+          action: () => {
+            showTourStep(1);
+          }
+        },
+        {
+          act: "step3",
+          speech: "NEBULA provides full coordinate versatility, supporting Cartesian and Polar grids with seamless switching between Radians and Degrees. Here, an 8-petal Polar Rose is plotted over 1500 sampled points with concentric radial circles and ray subdivisions, demonstrating complete parity with modern mathematical software.",
+          delay: 24000,
+          action: () => {
+            showTourStep(2);
+          }
+        },
+        {
+          act: "step4",
+          speech: "For calculus education and engineering, NEBULA computes derivatives and definite integrals on the fly. We observe a parabola with its instantaneous tangent line, alongside adaptive Gauss-Kronrod numerical quadrature shading the signed area between minus two and two. Everything updates instantaneously as functions or bounds are modified.",
+          delay: 25000,
+          action: () => {
+            showTourStep(3);
+          }
+        },
+        {
+          act: "step5",
+          speech: "Now, the core innovation: physical concept synthesis powered by NVIDIA Nemotron 3 Ultra on Nebius Token Factory. Instead of writing formulas, users can type natural language physical phenomena like 'soliton wave' or 'black hole photon sphere'. Nemotron reasons through the physical laws, derives the exact governing equation, bounds the domain, and renders the result instantaneously.",
+          delay: 28000,
+          action: () => {
+            showTourStep(4);
+          }
+        },
+        {
+          act: "explain",
+          speech: "With our 'Explain with Nemotron' feature, students and researchers can request an instant mathematical and physical breakdown. NVIDIA Nemotron delivers a structured derivation explaining the Korteweg-de Vries balance between non-linear steepening and dispersion, complete with real-world applications in optics and fluid dynamics.",
+          delay: 28000,
+          action: () => {
+            const btnExp = document.getElementById("btn-explain-nemotron");
+            if (btnExp) btnExp.click();
+            const banner = document.getElementById("tour-banner");
+            if (banner) {
+              document.getElementById("tour-step-badge").textContent = "AI Analysis";
+              document.getElementById("tour-title").textContent = "Explain with Nemotron";
+              document.getElementById("tour-desc").textContent = "Deep geometric, physical, and calculus breakdown from Nebius Token Factory";
+            }
+          }
+        },
+        {
+          act: "conclusion",
+          speech: "NEBULA bridges human physical intuition and formal mathematical rigor. By pairing sub-millisecond local SymPy and NumPy computation with the frontier intelligence of NVIDIA Nemotron on Nebius Token Factory, NEBULA reimagines mathematical software. The complete codebase is open source on GitHub. Thank you for watching!",
+          delay: 22000,
+          action: () => {
+            const banner = document.getElementById("tour-banner");
+            if (banner) {
+              document.getElementById("tour-step-badge").textContent = "Submission Complete";
+              document.getElementById("tour-title").textContent = "NEBULA: Ready for Evaluation";
+              document.getElementById("tour-desc").textContent = "Nebius AI & NVIDIA Hackathon 2026";
+            }
+          }
+        }
       ];
 
-      let stepIndex = 0;
-      function nextStep() {
+      let actIndex = 0;
+      function nextAct() {
         if (recorder.state === "inactive") return;
-        if (stepIndex >= scriptSteps.length) {
-          speakText("Thank you for watching NEBULA: bridging human physical intuition and mathematical rigor with NVIDIA and Nebius.");
+        if (actIndex >= scriptActs.length) {
           setTimeout(() => {
             if (recorder.state !== "inactive") recorder.stop();
-          }, 6000);
+          }, 3000);
           return;
         }
 
-        const curr = scriptSteps[stepIndex];
-        showTourStep(curr.step);
-        speakText(curr.speech);
+        const curr = scriptActs[actIndex];
         if (curr.action) curr.action();
+        speakText(curr.speech);
+        setSubtitles(curr.speech);
 
-        stepIndex++;
-        setTimeout(nextStep, curr.delay);
+        actIndex++;
+        setTimeout(nextAct, curr.delay);
       }
 
-      nextStep();
+      nextAct();
     });
   }
-
   function boot() {
     resize();
     renderKeypad();
